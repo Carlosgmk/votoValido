@@ -111,7 +111,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
           return 'Muito bem! Vou te auxiliar até completar o cadastro. Envie uma foto do problema que você encontrou\nLembre-se, apenas UMA FOTO';
         } else if (mensagem === 'Consultar atualizações da minha cidade') {
           setStep('consultar');
-          return 'Aqui estão as atualizações mais recentes:';
+          return 'Selecione o Estado que deseja verificar as atualizações:';
         } else {
           return 'Por favor, digite (Relatar um novo problema) ou (Consultar atualizações da minha cidade).';
         }
@@ -220,7 +220,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
 
 
       case 'consultar':
-        return 'Aqui estão as atualizações mais recentes:';
+        return 'Selecione o Estado que deseja verificar as atualizações:';
         case 'localizacaoManual':
       if (mensagem.split(',').length === 3) {
         setLocalizacao(mensagem);
