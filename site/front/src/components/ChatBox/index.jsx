@@ -35,8 +35,11 @@ const ChatBox = () => {
   const [opcaoSelecionada] = useState(null);
 
   useEffect(() => {
+    // console.log("selectedFile:", selectedFile);
+    // console.log("fotoCarregada:", fotoCarregada);
     if (selectedFile && fotoCarregada) {
       setStep('enviarLocalizacao');
+      // console.log('pegueii')
     }
   }, [selectedFile, fotoCarregada, setStep]);
 

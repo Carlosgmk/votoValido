@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { digitacao } from './typingEffect';
 // import { MensagensChat } from './MensagemChat';
 import { carregar_problemas } from '../../../../../funcoes/problemas';
+import { sendMessageToAPI } from '../../../../../Api/api';
 // import  enviarDados  from '../../../../../Api/testFetch.js';
 
 
@@ -9,6 +10,9 @@ const useChatLogic = () => {
   const [mensagens, setMensagens] = useState([
     { from: 'bot', text: 'Olá! Sou o Veve, o bot que vai ajudar a cidade.\n\n Diga onde está o problema, envie uma foto e descreva o que está acontecendo.\nVocê também pode fazer uma consulta rápida de denúncias já cadastradas.\nDigite <a>/start</a> para começar a usar o bot.' },
   ]);
+
+
+  
   const [mensagem, setMensagem] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,11 +27,15 @@ const [subcategoriaSelecionada,setSubcategoriaSelecionada] = useState('');
 const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
 const [phtoSelecionada, setphtoSelecionada] = useState('');
 
+
+
   const problemas = carregar_problemas();
   const topicos = Object.keys(problemas);
   const dicProblemas = problemas;
 
   const handleEnviarMensagem = () => {
+    // console.log('handleEnviarMensagem chamado com mensagem:', mensagem);
+
     if (mensagem !== '') {
       if (step === 'enviarLocalizacao' && mensagem === '1') {
         navigator.geolocation.getCurrentPosition(
@@ -41,6 +49,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
                 console.log(data);
                 const localizacao = `${data.address.state}, ${data.address.city}, ${data.address.road}`;
                 setLocalizacao(localizacao);
+                console.log('Mensagem enviada:', mensagem);
                 setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: localizacao }]);
                
                 setStep('categoria');
@@ -56,6 +65,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
         );
         setMensagem('');
       } else if (step === 'enviarLocalizacao' && mensagem === '2') {
+        // console.log('1')
         setMensagens(prevMensagens => [
           ...prevMensagens,
           { from: 'user', text: mensagem },
@@ -66,14 +76,18 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
       } else {
         const novaMensagem = mensagem;
         const resposta = getResposta(novaMensagem, step);
+        // console.log('aqui',novaMensagem)
         setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: novaMensagem }]);
-        setTimeout(() => {
+        // setTimeout(() => {
+          // console.log('tst',resposta)
           setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: resposta }]);
-        }, 300);
+        // }, 300);
         setMensagem('');
         if (step === 'enviarLocalizacao' && mensagem) {
           setStep('finalizado');
-          handleFinalizado();
+        }
+        if (step === 'finalizado') {
+          // handleFinalizado()
         }
       }
      
@@ -123,6 +137,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
         } else {
           if (mensagem.split(',').length === 3) {
             setLocalizacao(mensagem);
+            console.log('teste')
             setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: mensagem }]);
             setStep('categoria');
             categoriasProblema();
@@ -146,6 +161,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
               if (subcategorias && subcategorias.length > 0) {
                 setCategoria(categoriaReal);
                 setStep('subcategoria');
+                console.log('teste',subcategoria)
                 setTimeout(() => {
                   setMensagens(prevMensagens => [
                     ...prevMensagens,
@@ -164,7 +180,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
                   setCategoria(categoria);
                   setSubcategoria(categoriaSelecionada);
                   setStep('finalizado');
-                  handleFinalizado();
+                 
                   return `Obrigado por relatar o problema! Categoria: ${categoria}, Subcategoria: ${categoriaSelecionada}.`
                   
                   ;
@@ -195,7 +211,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
             }
         
             case 'finalizado':
-            handleFinalizado();
+            
             return 'Obrigado por relatar o problema!';
               
 
@@ -227,15 +243,16 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
       
       const handleButtonClick = (opcao) => {
         const textoBotao = opcao;
+        // console.log('eee',textoBotao)
         setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: textoBotao }]);
-        console.log('eu acho que peguei alguma coisa', opcao)
+        // console.log('eu acho que peguei alguma coisa', opcao)
         setCategoriaSelecionada(opcao);
         setTimeout(() => {
             // Aqui você verifica se a opção corresponde a uma chave em problemas
             if (problemas[opcao]) {
               
                 const subcategorias = problemas[opcao];
-               
+                console.log('aaaa',subcategorias)
                 // Adiciona a mensagem com as subcategorias
                 setMensagens(prevMensagens => [
                     ...prevMensagens,
@@ -269,18 +286,22 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
 
 
   const handleRelatarProblema = () => {
+    console.log('relatarProblema')
     setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Relatar um novo problema' }]);
     setTimeout(() => {
       setStep('enviarFoto');
+      console.log('mandar foto')
       setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: ' Muito bem! Vou te auxiliar até completar o cadastro.\n Envie uma foto do problema que você encontrou \nLembre-se, apenas UMA FOTO' }]);
     }, 500 );
   };
   
   const handleConsultarProblema = () => {
+    console.log('teste')
     setMensagens (prevMensagens => [...prevMensagens, { from: 'user', text : 'Consultar atualizações da minha cidade' }]);
     setTimeout (() => {
  setStep('consultar ');
-      setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: 'Aqui estão as atual izações mais recentes:' }]);
+ console.log('teste')
+      setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: 'Aqui estão as atualizações mais recentes:' }]);
     }, 500);
   };
 
@@ -308,17 +329,20 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
       console.log('Foto selecionadaa iai:', file);
       const phtoSelecionada = file
       setphtoSelecionada(phtoSelecionada)
+      // console.log('teste1')
       setMensagens(prevMensagens => [...prevMensagens, 
         { from: 'user', text: 'Foto adicionada' }, 
         { from: 'bot', text: 'Agora compartilhe sua localização:' },
       ]);
     } else {
+      console.log('teste2')
       setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Foto adicionada' }, { from: 'bot', text: 'Ótimo!' }]);
     }
   };
 
   const handleKeyDown = (evento) => {
     if (evento.key === 'Enter') {
+      
       handleEnviarMensagem ();
     }
   };
@@ -326,13 +350,13 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   const categoriasProblema = () =>{
   setTimeout(() => {
     const opcoes = topicos;
-    
+    console.log('categorias', opcoes)
     setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: 'Selecione a categoria do problema:', opcoes: opcoes, isSubcategory: false }]);
     }, 300);
   }
   
   const handleSubcategoriaClick = (subcategoria) => {
-    
+    // console.log('aaaasasasas',subcategoria)
     setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: subcategoria }]);
     setMensagens(prevMensagens => [
       ...prevMensagens,
@@ -341,8 +365,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
         text: `Obrigado por relatar o problema de ${subcategoria}. Sua contribuição mantém a ordem na cidade.`,
       },
     ]);
-    console.log('Peguei a ', subcategoria)
-    // setStep('finalizado');
+    setStep('finalizado');
     setSubcategoriaSelecionada(subcategoria);
   };
 
@@ -355,20 +378,28 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   };
   
 
+
+  
   
   const handleFinalizado = (dados) => {
-    console.log(dados);
-    // agora você pode usar o objeto dados aqui
-  };
+    if (!dados.foto || !dados.localizacao || !dados.categoria || !dados.subcategoria) {
+        console.error("Dados incompletos:", dados);
+        return;
+    }
+    // console.log(dados);
+    sendMessageToAPI(dados);
+};
+ 
+
   
-  const dados = {
-    foto:phtoSelecionada,
-    localizacao: localizacao,
-    categoria: categoriaSelecionada,
-    subcategoria: subcategoriaSelecionada
-  };
-  
-  handleFinalizado(dados);
+//   const dados = {
+//     foto: "https://example.com/photo.jpg",
+//     localizacao: "São Paulo, Ourinhos, Rua do Expedicionário",
+//     categoria: "Pontes e Passarelas",
+//     subcategoria: "risco de queda"
+    
+// };
+
 
   
   const handleCompartilharLocalizacao = () => {
@@ -410,6 +441,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   };
 
   const handleEnviarManualmente = () => {
+    console.log('atualizandoMnau')
     setTimeout(() => {
       setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: 'Por favor, digite a localização manualmente (Estado , Cidade, Nome da Rua):' }]);
       setStep('localizacaoManual');
@@ -417,11 +449,21 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   };
 
   useEffect (() => {
+    console.log("mensagensssssssss:", mensagens);
     const lastTypingRef = document.querySelector('.last-bot-message');
     if (lastTypingRef) {
       digitacao(lastTypingRef);
     }
-  }, [mensagens]);
+    const dados = {
+      // phtoSelecionada
+      foto: 'eee',
+      localizacao: localizacao,
+      categoria: categoriaSelecionada,
+      subcategoria: subcategoriaSelecionada
+    };
+    handleFinalizado(dados);
+    
+  }, [mensagens, categoriaSelecionada, localizacao, subcategoriaSelecionada]);
 
   return {
     mensagens,

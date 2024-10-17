@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import {  memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import FotoContainer from '../FotoChatbot/fotoContainer';
 import { CustomButton } from './style';
@@ -8,24 +8,26 @@ const formatarMensagem = (mensagem) => {
     return mensagem.split('').map((char, index) => (
       `<span style="animation-delay: ${index * 50}ms">${char}</span>`
     )).join('');
-  } else {
-    return mensagem;
   }
+  return mensagem;
 }
 
-const MensagensChat = ({ mensagem, indice, selectedFile, fotoCarregada, mensagens, setMensagens, handleRelatarProblema, handleConsultarProblema, handleButtonClick, handleCompartilharLocalizacao, handleEnviarManualmente, handleSubcategoriaClick }) => {
-  console.log(mensagens); // Adicione isso aqui
-  const [localizacao, setLocalizacao] = useState('');
-  const [step, setStep] = useState('inicio');
+const MensagensChat = memo(({ 
+  mensagem,
+  indice, 
+  selectedFile,
+  fotoCarregada,
+  mensagens, 
+  setMensagens, 
+  handleRelatarProblema,
+  handleConsultarProblema, 
+  handleButtonClick, 
+  handleCompartilharLocalizacao, 
+  handleEnviarManualmente, 
+  handleSubcategoriaClick 
+}) => {
 
-  useEffect(() => {
-    if (step === 'enviarLocalizacao' && localizacao) {
-      handleCompartilharLocalizacao();
-      setStep('finalizado');
-    }
-  }, [localizacao, step, handleCompartilharLocalizacao]);
-
-  const handleCompartilharLocalizacaoAtual = () => {
+  const handleCompartilharLocalizacaoAtual = useCallback(() => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const latitude = position.coords.latitude;
@@ -34,22 +36,18 @@ const MensagensChat = ({ mensagem, indice, selectedFile, fotoCarregada, mensagen
           .then(response => response.json())
           .then(data => {
             console.log(data);
-            const localizacao = `${data.address.state}, ${data.address.city}, ${data.address.road}`;
-            setLocalizacao(localizacao);
-            
-            setStep('finalizado');
             handleCompartilharLocalizacao();
           })
           .catch(error => console.error(error));
       },
       (error) => console.error(error),
       {
-        enableHighAccuracy: true, // Habilita a alta precisão
-        timeout: 5000,            // Tempo limite de 5 segundos
-        maximumAge: 0             // Não usar cache
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
       }
     );
-  };
+  }, [handleCompartilharLocalizacao]);
 
   return (
     <div key={indice} className={`chat-message ${mensagem.from === 'bot' ? 'bot' : 'user'}`}>
@@ -67,16 +65,14 @@ const MensagensChat = ({ mensagem, indice, selectedFile, fotoCarregada, mensagen
             {mensagem.text === 'Muito bem, com qual das opções você deseja seguir:' && (
               <div className="button-group">
                 <br />
-                <CustomButton onClick={() => handleRelatarProblema()}>Relatar um novo problema</CustomButton>
-                <CustomButton onClick={() => handleConsultarProblema()}>Consultar atualizações da minha cidade</CustomButton>
+                <CustomButton onClick={handleRelatarProblema}>Relatar um novo problema</CustomButton>
+                <CustomButton onClick={handleConsultarProblema}>Consultar atualizações da minha cidade</CustomButton>
               </div>
             )}
             {mensagem.text === 'Agora compartilhe sua localização:' && (
               <div className="button-group">
                 <br />
-                <CustomButton onClick={() => {
-                  handleCompartilharLocalizacaoAtual();
-                }}>Compartilhar a Localização Atual</CustomButton>
+                <CustomButton onClick={handleCompartilharLocalizacaoAtual}>Compartilhar a Localização Atual</CustomButton>
                 <CustomButton onClick={() => {
                   handleEnviarManualmente();
                   setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Enviar Manualmente' }]);
@@ -98,25 +94,27 @@ const MensagensChat = ({ mensagem, indice, selectedFile, fotoCarregada, mensagen
       )}
     </div>
   );
-};
+});
+
+MensagensChat.displayName = 'MensagensChat';
 
 MensagensChat.propTypes = {
   mensagem: PropTypes.shape({
     from: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
-    opcoes: PropTypes.arrayOf(PropTypes .string),
+    opcoes: PropTypes.arrayOf(PropTypes.string),
     subcategorias: PropTypes.arrayOf(PropTypes.string),
-    isSubcategory: PropTypes.bool, // Adicionei essa linha
+    isSubcategory: PropTypes.bool,
   }).isRequired,
   indice: PropTypes.number.isRequired,
   selectedFile: PropTypes.object,
   fotoCarregada: PropTypes.bool,
-  mensagens: PropTypes.arrayOf(PropTypes.shape({
+ mensagens: PropTypes.arrayOf(PropTypes.shape({
     from: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
     opcoes: PropTypes.arrayOf(PropTypes.string),
     subcategorias: PropTypes.arrayOf(PropTypes.string),
-    isSubcategory: PropTypes.bool, // Adicionei essa linha
+    isSubcategory: PropTypes.bool,
   })).isRequired,
   setMensagens: PropTypes.func.isRequired,
   handleRelatarProblema: PropTypes.func.isRequired,
