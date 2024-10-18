@@ -1,4 +1,4 @@
-import {  memo, useCallback } from 'react';
+import {  memo, useCallback,useState  } from 'react';
 import PropTypes from 'prop-types';
 import FotoContainer from '../FotoChatbot/fotoContainer';
 import { CustomButton } from './style';
@@ -24,8 +24,26 @@ const MensagensChat = memo(({
   handleButtonClick, 
   handleCompartilharLocalizacao, 
   handleEnviarManualmente, 
-  handleSubcategoriaClick 
+  handleSubcategoriaClick,
+  handleGetEstados,
+  handleEstadoClick,
+  handleEstadoClickCidade,
+  // handleselCidade,
+  
+  // handleConsultarProblemaRua,
+  
+  
+  
+  
+  
 }) => {
+  const [estados, setEstados] = useState([]);
+  // const [ultimaSelecao] = useState([]);
+
+  const handleConsultarEstados = useCallback(async () => {
+    const estadosUnicos = await handleGetEstados; // Chama a função para obter os estados
+    setEstados(estadosUnicos); // Atualiza os estados
+  }, [handleGetEstados]);
 
   const handleCompartilharLocalizacaoAtual = useCallback(() => {
     navigator.geolocation.getCurrentPosition(
@@ -48,6 +66,9 @@ const MensagensChat = memo(({
       }
     );
   }, [handleCompartilharLocalizacao]);
+
+
+
 
   return (
     <div key={indice} className={`chat-message ${mensagem.from === 'bot' ? 'bot' : 'user'}`}>
@@ -87,6 +108,53 @@ const MensagensChat = memo(({
                 ))}
               </div>
             )}
+
+                {/* Exibe os botões de estados únicos */}
+                {mensagem.estado && (
+              <div className="button-group">
+                {mensagem.estado.map((estado, index) => (
+                  <CustomButton key={index} onClick={() => { handleConsultarEstados(estados)
+                    handleEstadoClick(estado);
+                    
+                  }}>
+                    {estado}
+                  </CustomButton>
+                ))}
+              </div>
+            )}
+            {mensagem.cidades && (
+            <div className="button-group">
+              {mensagem.cidades.map((cidade, index) => (
+              <CustomButton key={index} onClick={() => { 
+                handleEstadoClickCidade(cidade); // Chame a função para consultar problemas na cidade
+               
+                
+          }}>
+            {cidade}
+            </CustomButton>
+        ))}
+     </div>
+)}
+
+{/* {mensagem.ruas && (
+            <div className="button-group">
+              {mensagem.ruas.map((rua, index) => (
+              <CustomButton key={index} onClick={() => { 
+                // handleselCidade(cidade); // Chame a função para consultar problemas na cidade
+               
+                handleConsultarProblemaRua(rua)
+          }}>
+            {rua}
+            </CustomButton>
+        ))}
+
+          
+
+  </div>
+)} */}
+
+
+
           </div>
         ) : (
           <p>{mensagem.text}</p>
@@ -103,6 +171,9 @@ MensagensChat.propTypes = {
     from: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
     opcoes: PropTypes.arrayOf(PropTypes.string),
+    estado: PropTypes.arrayOf(PropTypes.string),
+    cidades: PropTypes.arrayOf(PropTypes.string),
+    ruas: PropTypes.arrayOf(PropTypes.string),
     subcategorias: PropTypes.arrayOf(PropTypes.string),
     isSubcategory: PropTypes.bool,
   }).isRequired,
@@ -113,6 +184,9 @@ MensagensChat.propTypes = {
     from: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
     opcoes: PropTypes.arrayOf(PropTypes.string),
+    estado: PropTypes.arrayOf(PropTypes.string),
+    cidades: PropTypes.arrayOf(PropTypes.string),
+    ruas: PropTypes.arrayOf(PropTypes.string),
     subcategorias: PropTypes.arrayOf(PropTypes.string),
     isSubcategory: PropTypes.bool,
   })).isRequired,
@@ -123,6 +197,15 @@ MensagensChat.propTypes = {
   handleSubcategoriaClick: PropTypes.func,
   handleCompartilharLocalizacao: PropTypes.func,
   handleEnviarManualmente: PropTypes.func,
+  handleGetEstados: PropTypes.func,
+  handleEstadoClick: PropTypes.func,
+  handleEstadoClickCidade: PropTypes.func,
+  handleselCidade: PropTypes.func,
+  handleConsultarProblemaRua: PropTypes.func,
+  
+  
+  
+  
 };
 
 export default MensagensChat;

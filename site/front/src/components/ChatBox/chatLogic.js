@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { digitacao } from './typingEffect';
-// import { MensagensChat } from './MensagemChat';
 import { carregar_problemas } from '../../../../../funcoes/problemas';
-import { sendMessageToAPI } from '../../../../../Api/api';
-// import  enviarDados  from '../../../../../Api/testFetch.js';
+import { sendMessageToAPI, getMessageToAPI } from '../../../../../Api/api';
+
 
 
 const useChatLogic = () => {
@@ -111,7 +110,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
           return 'Muito bem! Vou te auxiliar até completar o cadastro. Envie uma foto do problema que você encontrou\nLembre-se, apenas UMA FOTO';
         } else if (mensagem === 'Consultar atualizações da minha cidade') {
           setStep('consultar');
-          return 'Selecione o Estado que deseja verificar as atualizações:';
+          return 'Aqui estão as atualizações mais recentes:';
         } else {
           return 'Por favor, digite (Relatar um novo problema) ou (Consultar atualizações da minha cidade).';
         }
@@ -209,7 +208,11 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
             } else {
               return 'Por favor, selecione uma subcategoria.';
             }
-        
+             
+       
+
+            
+
             case 'finalizado':
             
             return 'Obrigado por relatar o problema!';
@@ -220,7 +223,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
 
 
       case 'consultar':
-        return 'Selecione o Estado que deseja verificar as atualizações:';
+        return 'Aqui estão as atualizações mais recentes:';
         case 'localizacaoManual':
       if (mensagem.split(',').length === 3) {
         setLocalizacao(mensagem);
@@ -295,15 +298,29 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     }, 500 );
   };
   
-  const handleConsultarProblema = () => {
-    console.log('teste')
-    setMensagens (prevMensagens => [...prevMensagens, { from: 'user', text : 'Consultar atualizações da minha cidade' }]);
-    setTimeout (() => {
- setStep('consultar ');
- console.log('teste')
-      setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: 'Aqui estão as atualizações mais recentes:' }]);
+  const handleConsultarProblema = async () => {
+    
+    console.log('teste');
+    setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Consultar atualizações da minha cidade' }]);
+    
+    setTimeout(async () => {
+      // setStep('consultar');
+      console.log('teste');
+  
+      // Chama a função para obter os estados
+      const estados = await handleGetEstados(); // Chama a função que você implementou
+      console.log(estados)
+      // Cria uma mensagem com os estados
+      const estadosMensagem = estados.length > 0 
+        ? `Aqui estão as atualizações mais recentes:\n`
+        : 'Nenhum estado encontrado.';
+
+        setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: estadosMensagem, estado: estados }]);
     }, 500);
   };
+
+
+
 
 
 
@@ -314,10 +331,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   const handleClosePopup = () => {
     setShowPopup(false);
   };
-
-
-
- 
+  
 
   const handleConfirm = (file) => {
     setSelectedFile(file);
@@ -340,6 +354,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     }
   };
 
+  
   const handleKeyDown = (evento) => {
     if (evento.key === 'Enter') {
       
@@ -377,30 +392,15 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     return [];
   };
   
-
-
-  
-  
   const handleFinalizado = (dados) => {
     if (!dados.foto || !dados.localizacao || !dados.categoria || !dados.subcategoria) {
         console.error("Dados incompletos:", dados);
         return;
     }
     // console.log(dados);
-    sendMessageToAPI(dados);
+    sendMessageToAPI(dados)
 };
  
-
-  
-//   const dados = {
-//     foto: "https://example.com/photo.jpg",
-//     localizacao: "São Paulo, Ourinhos, Rua do Expedicionário",
-//     categoria: "Pontes e Passarelas",
-//     subcategoria: "risco de queda"
-    
-// };
-
-
   
   const handleCompartilharLocalizacao = () => {
     // setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Compartilhar a Localização Atual' }]);
@@ -448,6 +448,175 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     }, 500);
   };
 
+
+  const handleGetEstados = async () => {
+    try {
+      const data = await getMessageToAPI(); // Chama a função da API que busca as localizações
+      console.log('Dados recebidos da API:', data); // Verifique os dados recebidos
+  
+      // Verifica se os dados estão presentes e se é um array
+      if (data && Array.isArray(data)) {
+        // Extrai o estado (primeiro elemento da string) e remove duplicatas
+        const estadosUnicos = [...new Set(data.map((item) => {
+          const localizacao = item.localizacao; // Acesse a propriedade localizacao
+          if (typeof localizacao === 'string') {
+            const estado = localizacao.split(',')[0].trim(); // Pega o primeiro item da string (Estado) e remove espaços em branco
+            return estado;
+          }
+          return null; // Retorna null se localizacao não for uma string
+        }).filter(Boolean))]; // Filtra valores nulos antes de criar o Set
+  
+        console.log('Estados únicos:', estadosUnicos); // Verifique os estados únicos
+        return estadosUnicos;
+      } else {
+        console.error('Erro ao buscar estados: Dados não encontrados ou não são um array');
+        return [];
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estados:', error);
+      return [];
+    }
+  };
+
+  const handleGetCidadesPorEstado = async (estadoSelecionado) => {
+    try {
+      const data = await getMessageToAPI(); // Chama a função da API que busca as localizações
+      console.log('Dados recebidos da API:', data); // Verifique os dados recebidos
+  
+      // Verifica se os dados estão presentes e se é um array
+      if (data && Array.isArray(data)) {
+        // Filtra as cidades que pertencem ao estado selecionado
+        const cidades = data
+          .filter((item) => {
+            const localizacao = item.localizacao; // Acesse a propriedade localizacao
+            if (typeof localizacao === 'string') {
+              const estado = localizacao.split(',')[0].trim(); // Pega o primeiro item da string (Estado)
+              return estado === estadoSelecionado; // Compara com o estado selecionado
+            }
+            return false; // Retorna false se localizacao não for uma string
+          })
+          .map((item) => {
+            const localizacao = item.localizacao;
+            return localizacao.split(',')[1].trim(); // Pega a cidade (segundo item da string)
+          });
+  
+        // Remove duplicatas
+        const cidadesUnicas = [...new Set(cidades)];
+        console.log('Cidades únicas:', cidadesUnicas); // Verifique as cidades únicas
+        return cidadesUnicas;
+      } else {
+        console.error('Erro ao buscar cidades: Dados não encontrados ou não são um array');
+        return [];
+      }
+    } catch (error) {
+      console.error('Erro ao buscar cidades:', error);
+      return [];
+    }
+  };
+
+  const handleGetProblemasPorCidade = async (cidadeSelecionada) => {
+    try {
+      const data = await getMessageToAPI(); // Chama a função da API que busca os problemas
+      console.log('Dados recebidos da API:', data); // Verifique os dados recebidos
+  
+      // Verifica se os dados estão presentes e se é um array
+      if (data && Array.isArray(data)) {
+        // Filtra os problemas que pertencem à cidade selecionada
+        const problemas = data.filter((item) => {
+          const localizacao = item.localizacao; // Acesse a propriedade localizacao
+          if (typeof localizacao === 'string') {
+            const cidade = localizacao.split(',')[1].trim(); // Pega a cidade (segundo item da string)
+            return cidade === cidadeSelecionada; // Compara com a cidade selecionada
+          }
+          return false; // Retorna false se localizacao não for uma string
+        });
+  
+        console.log('Problemas encontrados:', problemas); // Verifique os problemas encontrados
+        return problemas;
+      } else {
+        console.error('Erro ao buscar problemas: Dados não encontrados ou não são um array');
+        return [];
+      }
+    } catch (error) {
+      console.error('Erro ao buscar problemas:', error);
+      return [];
+    }
+  };
+
+
+
+  const handleEstadoClick =  (estado) => {
+    setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: estado }]);
+    console.log(estado)
+    handleselCidade(estado)
+
+    
+  };
+
+  
+  const handleselCidade = async (estado) => {
+    const estadoSel = estado;
+    console.log('Estado selecionado:', estadoSel);
+  
+    // Aguarde a execução da função assíncrona
+    const cidadesSel = await handleGetCidadesPorEstado(estadoSel);
+    console.log('Cidades do estado selecionado:', cidadesSel);
+  
+    setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: 'Cidades do estado selecionado:', cidades: cidadesSel }]);
+
+    
+  };
+
+
+  const handleEstadoClickCidade = (cidade) => {
+    const cidadeSel = cidade
+    // Adiciona a mensagem ao estado para exibir ao lado do usuário
+    setMensagens(prevMensagens => [
+      ...prevMensagens,
+      { from: 'user', text: cidadeSel }
+    ]);
+    viewProblem(cidadeSel)
+    // console.log('isoooo', cidadeSel)
+    }
+
+    const viewProblem = async (cidade) => {
+      const cidadeProm = cidade;
+      
+      // Aguarda a resolução da função que busca os problemas
+      const problemasCidade = await handleGetProblemasPorCidade(cidadeProm);
+      
+      console.log('Problemas encontrados:', problemasCidade); // Verifique os problemas encontrados
+    
+      // Verifica se existem problemas encontrados
+      if (problemasCidade.length > 0) {
+        // Formata a mensagem para incluir categoria, subcategoria e rua
+        const problemasText = problemasCidade.map(problema => {
+          const locationArray = problema.localizacao.split(','); // Separa a string de localização em um array
+          const rua = locationArray[locationArray.length - 1].trim(); // Acessa o último elemento do array e remove espaços em branco
+    
+          return `Problema de ${problema.subcategoria} no local ${rua}`; // Inclui a rua
+        }).join('\n'); // Junta as mensagens em uma única string
+    
+        // Adiciona a mensagem ao estado para exibir ao lado do usuário
+        setMensagens(prevMensagens => [
+          ...prevMensagens,
+          { from: 'bot', text: `Aqui estão os problemas encontrados na cidade ${cidadeProm}:\n\n` + problemasText }
+        ]);
+      } else {
+        // Mensagem caso não haja problemas encontrados
+        setMensagens(prevMensagens => [
+          ...prevMensagens,
+          { from: 'bot', text: 'Nenhum problema encontrado para esta cidade.' }
+        ]);
+      }
+    };
+
+
+
+
+
+
+
   useEffect (() => {
     console.log("mensagensssssssss:", mensagens);
     const lastTypingRef = document.querySelector('.last-bot-message');
@@ -462,6 +631,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
       subcategoria: subcategoriaSelecionada
     };
     handleFinalizado(dados);
+   
     
   }, [mensagens, categoriaSelecionada, localizacao, subcategoriaSelecionada]);
 
@@ -492,7 +662,14 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     phtoSelecionada,
     handleEnviarManualmente, 
     handleSubcategoriaClick ,
-    handleFinalizado
+    handleFinalizado,
+    handleGetEstados,
+    handleEstadoClick,
+    handleselCidade,
+    handleEstadoClickCidade,
+   
+    handleGetProblemasPorCidade
+    
   };
 };
 

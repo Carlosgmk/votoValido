@@ -29,7 +29,12 @@ const ChatBox = () => {
     handleSubcategoriaClick,
     setMensagens,
     handleEnviarManualmente,
-    handleCompartilharLocalizacao
+    handleCompartilharLocalizacao,
+    handleEstadoClick,
+    handleselCidade,
+    handleEstadoClickCidade
+
+   
   } = useChatLogic();
 
   const [opcaoSelecionada] = useState(null);
@@ -63,6 +68,10 @@ const ChatBox = () => {
                 handleCompartilharLocalizacao={handleCompartilharLocalizacao}
                  handleEnviarManualmente={handleEnviarManualmente}
                  handleSubcategoriaClick={handleSubcategoriaClick}
+                 handleEstadoClick={handleEstadoClick} 
+                 handleselCidade={handleselCidade} 
+                 handleEstadoClickCidade={handleEstadoClickCidade} 
+                 
               />
             ))}
           </div>
