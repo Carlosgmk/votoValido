@@ -51,6 +51,7 @@ export const CardContent = styled.p`
 
 export const Modal = styled.div`
   position: fixed;
+  z-index:9999999;
   top: 0;
   left: 0;
   width: 100%;
@@ -112,8 +113,8 @@ export const ModalHeader = styled.div`
   }
 
   .close {
-
-     margin-bottom: 10px;
+    margin-left: 50px;
+     margin-bottom: 50px;
     background-color: transparent; /* Exemplo de fundo transparente */
     color: #ffff; /* Cor do texto */
     border: none; /* Sem borda */
