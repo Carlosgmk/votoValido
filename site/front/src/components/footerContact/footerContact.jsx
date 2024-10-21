@@ -1,7 +1,7 @@
 import { FooterContainer } from './style'; 
 const FooterContact = () => {
   return (
-    <FooterContainer>
+    <FooterContainer id='contato'>
       <div className="footer-content">
         <div className="footer-section">
           <h3>Sobre nós</h3>
@@ -16,8 +16,6 @@ const FooterContact = () => {
           <h3>Ajuda</h3>
           <ul>
             <li><a href="#">Central de ajuda</a></li>
-            <li><a href="#">Devoluções</a></li>
-            <li><a href="#">Rastrear pedido</a></li>
             <li><a href="#">Fale conosco</a></li>
           </ul>
         </div>
@@ -25,9 +23,8 @@ const FooterContact = () => {
           <h3>Conta</h3>
           <ul>
             <li><a href="#">Seu perfil</a></li>
-            <li><a href="#">Seus pedidos</a></li>
-            <li><a href="#">Lista de desejos</a></li>
-            <li><a href="#">Cartões-presente</a></li>
+            <li><a href="#">Privacidade</a></li>
+            
           </ul>
         </div>
         <div className="footer-section">

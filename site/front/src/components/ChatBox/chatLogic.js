@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect,useCallback,useRef  } from 'react';
 import { digitacao } from './typingEffect';
 import { carregar_problemas } from '../../../../../funcoes/problemas';
 import { sendMessageToAPI, getMessageToAPI } from '../../../../../Api/api';
 
 
 
+
 const useChatLogic = () => {
   const [mensagens, setMensagens] = useState([
-    { from: 'bot', text: 'Olá! Sou o Veve, o bot que vai ajudar a cidade.\n\n Diga onde está o problema, envie uma foto e descreva o que está acontecendo.\nVocê também pode fazer uma consulta rápida de denúncias já cadastradas.\nDigite <a>/start</a> para começar a usar o bot.' },
+    { 
+      from: 'bot',
+      text: 'Olá!  Sou o Veve, o bot que vai ajudar a cidade.\n\nDiga onde está o problema, envie uma foto e selecione o que esta acontecendo\nvocê também pode fazer uma consulta rápida de denúncias já cadastradas.\n\nDigite /start para começar a usar o bot.' 
+    },
   ]);
-
-
   
   const [mensagem, setMensagem] = useState('');
   const [showPopup, setShowPopup] = useState(false);
@@ -20,17 +22,17 @@ const useChatLogic = () => {
   const [categoria, setCategoria] = useState('');
   const [subcategoria, setSubcategoria] = useState('');
   const [fotoCarregada, setFotoCarregada] = useState(false);
-  // const [file] = useState('');
-// const [opcao] = useState('');
-const [subcategoriaSelecionada,setSubcategoriaSelecionada] = useState('');
-const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
-const [phtoSelecionada, setphtoSelecionada] = useState('');
+  const [subcategoriaSelecionada,setSubcategoriaSelecionada] = useState('');
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
+  const [phtoSelecionada, setphtoSelecionada] = useState('');
+  const mensagemRef = useRef(null);
 
 
 
   const problemas = carregar_problemas();
   const topicos = Object.keys(problemas);
   const dicProblemas = problemas;
+  
 
   const handleEnviarMensagem = () => {
     // console.log('handleEnviarMensagem chamado com mensagem:', mensagem);
@@ -45,7 +47,8 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
             fetch(`https://eu1.locationiq.com/v1/reverse.php?key=pk.ddacdac981d0c27a478e935f8558a272&lat=${latitude}&lon=${longitude}&format=json`)
               .then(response => response.json())
               .then(data => {
-                console.log(data);
+                
+                
                 const localizacao = `${data.address.state}, ${data.address.city}, ${data.address.road}`;
                 setLocalizacao(localizacao);
                 console.log('Mensagem enviada:', mensagem);
@@ -87,6 +90,8 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
         }
         if (step === 'finalizado') {
           // handleFinalizado()
+
+          console.log('sei não fi')
         }
       }
      
@@ -208,19 +213,10 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
             } else {
               return 'Por favor, selecione uma subcategoria.';
             }
-             
-       
-
-            
 
             case 'finalizado':
-            
-            return 'Obrigado por relatar o problema!';
+            return cadastrarOuConsultar();
               
-
-
-
-
 
       case 'consultar':
         return 'Aqui estão as atualizações mais recentes:';
@@ -239,8 +235,6 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
             return 'Desculpe, não entendi sua mensagem.';
         }
       };
-
-
 
 
       
@@ -287,41 +281,73 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     };
 
 
-
   const handleRelatarProblema = () => {
     console.log('relatarProblema')
     setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Relatar um novo problema' }]);
     setTimeout(() => {
       setStep('enviarFoto');
       console.log('mandar foto')
-      setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: ' Muito bem! Vou te auxiliar até completar o cadastro.\n Envie uma foto do problema que você encontrou \nLembre-se, apenas UMA FOTO' }]);
+      setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: ' Muito bem! Vou te auxiliar até completar o cadastro.\n Envie uma foto do problema que você encontrou, Lembre-se apenas UMA FOTO.' }]);
     }, 500 );
   };
   
-  const handleConsultarProblema = async () => {
-    
+
+  const handleGetEstados = useCallback(async () => {
+    try {
+      const data = await getMessageToAPI(); // Chama a função da API que busca as localizações
+      console.log('Dados recebidos da API:', data); // Verifique os dados recebidos
+
+      // Verifica se os dados estão presentes e se é um array
+      if (data && Array.isArray(data)) {
+        // Extrai o estado (primeiro elemento da string) e remove duplicatas
+        const estadosUnicos = [...new Set(data.map((item) => {
+          const localizacao = item.localizacao; // Acesse a propriedade localizacao
+          if (typeof localizacao === 'string') {
+            const estado = localizacao.split(',')[0].trim(); // Pega o primeiro item da string (Estado) e remove espaços em branco
+            return estado;
+          }
+          return null; // Retorna null se localizacao não for uma string
+        }).filter(Boolean))]; // Filtra valores nulos antes de criar o Set
+
+        console.log('Estados únicos:', estadosUnicos); // Verifique os estados únicos
+        return estadosUnicos;
+      } else {
+        console.error('Erro ao buscar estados: Dados não encontrados ou não são um array');
+        return [];
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estados:', error);
+      return [];
+    }
+  }, []);
+
+
+
+  const handleConsultarProblema = useCallback(async () => {
     console.log('teste');
-    setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Consultar atualizações da minha cidade' }]);
-    
+    setMensagens(prevMensagens => [
+      ...prevMensagens,
+      { from: 'user', text: 'Consultar atualizações da minha cidade' }
+    ]);
+
     setTimeout(async () => {
-      // setStep('consultar');
       console.log('teste');
-  
+
       // Chama a função para obter os estados
       const estados = await handleGetEstados(); // Chama a função que você implementou
-      console.log(estados)
+      console.log(estados);
+      
       // Cria uma mensagem com os estados
       const estadosMensagem = estados.length > 0 
         ? `Aqui estão as atualizações mais recentes:\n`
         : 'Nenhum estado encontrado.';
 
-        setMensagens(prevMensagens => [...prevMensagens, { from: 'bot', text: estadosMensagem, estado: estados }]);
+      setMensagens(prevMensagens => [
+        ...prevMensagens,
+        { from: 'bot', text: estadosMensagem, estado: estados }
+      ]);
     }, 500);
-  };
-
-
-
-
+  }, [handleGetEstados]);
 
 
   const handleOpenPopup = () => {
@@ -333,24 +359,35 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   };
   
 
-  const handleConfirm = (file) => {
+  const handleConfirm = async (file) => {
     setSelectedFile(file);
     setFotoCarregada(true);
     handleClosePopup();
-   
-    setphtoSelecionada(file)
-    if (step === 'enviarFoto') {
-      console.log('Foto selecionadaa iai:', file);
-      const phtoSelecionada = file
-      setphtoSelecionada(phtoSelecionada)
-      // console.log('teste1')
-      setMensagens(prevMensagens => [...prevMensagens, 
-        { from: 'user', text: 'Foto adicionada' }, 
-        { from: 'bot', text: 'Agora compartilhe sua localização:' },
-      ]);
-    } else {
-      console.log('teste2')
-      setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Foto adicionada' }, { from: 'bot', text: 'Ótimo!' }]);
+  
+    setphtoSelecionada(file);
+  
+    const formData = new FormData();
+    formData.append('image', file); // Adiciona o arquivo de imagem ao formData
+  
+    try {
+      // Faz a requisição ao backend para salvar a imagem
+      const response = await fetch('http://localhost:3333/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      const data = await response.json();
+      if (data.imageUrl) {
+        console.log('Foto enviada com sucesso:', data.imageUrl);
+        setphtoSelecionada(data.imageUrl); // Define a URL da imagem salva
+        setMensagens((prevMensagens) => [
+          ...prevMensagens,
+          { from: 'user', text: 'Foto adicionada' },
+          { from: 'bot', text: 'Agora compartilhe sua localização:' },
+        ]);
+      }
+    } catch (error) {
+      console.error('Erro ao enviar a foto:', error);
     }
   };
 
@@ -371,19 +408,27 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   }
   
   const handleSubcategoriaClick = (subcategoria) => {
-    // console.log('aaaasasasas',subcategoria)
-    setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: subcategoria }]);
     setMensagens(prevMensagens => [
       ...prevMensagens,
-      {
-        from: 'bot',
-        text: `Obrigado por relatar o problema de ${subcategoria}. Sua contribuição mantém a ordem na cidade.`,
-      },
+      { from: 'user', text: subcategoria || 'Mensagem não definida' }
     ]);
+  
+    setTimeout(() => {
+      setMensagens(prevMensagens => [
+        ...prevMensagens,
+        {
+          from: 'bot',
+          text: `Agradecemos sinceramente por relatar o problema relacionado à ${subcategoria}.\nSua contribuição é fundamental para a manutenção da ordem e do bem-estar em nossa cidade.\n\nEstamos comprometidos em ouvir a voz dos cidadãos e valorizar cada feedback recebido. Sua participação ativa ajuda a construir uma comunidade mais forte e engajada.\nSe você estiver interessado em acompanhar todos os cadastros realizados e as discussões em andamento, convidamos você a visitar o nosso Fórum.\nJuntos, podemos continuar a trabalhar em prol de melhorias e soluções para nossa cidade.\n\nAgradecemos mais uma vez pela sua colaboração e esperamos contar com você em futuras interações. Até breve!`,
+        }
+      ]);
+    }, 1000);
+  
     setStep('finalizado');
     setSubcategoriaSelecionada(subcategoria);
   };
+  
 
+  
 
   const getSubcategorias = (opcao) => {
     if (problemas[opcao]) {
@@ -391,16 +436,8 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     }
     return [];
   };
-  
-  const handleFinalizado = (dados) => {
-    if (!dados.foto || !dados.localizacao || !dados.categoria || !dados.subcategoria) {
-        console.error("Dados incompletos:", dados);
-        return;
-    }
-    // console.log(dados);
-    sendMessageToAPI(dados)
-};
- 
+
+
   
   const handleCompartilharLocalizacao = () => {
     // setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Compartilhar a Localização Atual' }]);
@@ -449,34 +486,7 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
   };
 
 
-  const handleGetEstados = async () => {
-    try {
-      const data = await getMessageToAPI(); // Chama a função da API que busca as localizações
-      console.log('Dados recebidos da API:', data); // Verifique os dados recebidos
-  
-      // Verifica se os dados estão presentes e se é um array
-      if (data && Array.isArray(data)) {
-        // Extrai o estado (primeiro elemento da string) e remove duplicatas
-        const estadosUnicos = [...new Set(data.map((item) => {
-          const localizacao = item.localizacao; // Acesse a propriedade localizacao
-          if (typeof localizacao === 'string') {
-            const estado = localizacao.split(',')[0].trim(); // Pega o primeiro item da string (Estado) e remove espaços em branco
-            return estado;
-          }
-          return null; // Retorna null se localizacao não for uma string
-        }).filter(Boolean))]; // Filtra valores nulos antes de criar o Set
-  
-        console.log('Estados únicos:', estadosUnicos); // Verifique os estados únicos
-        return estadosUnicos;
-      } else {
-        console.error('Erro ao buscar estados: Dados não encontrados ou não são um array');
-        return [];
-      }
-    } catch (error) {
-      console.error('Erro ao buscar estados:', error);
-      return [];
-    }
-  };
+
 
   const handleGetCidadesPorEstado = async (estadoSelecionado) => {
     try {
@@ -611,29 +621,91 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
       }
     };
 
+    
+    const getUltimaMensagemDoUsuario = useCallback(() => {
+      const mensagensUsuario = mensagens.filter(mensagem => mensagem.from === 'user');
+      const ultimaMensagem = mensagensUsuario[mensagensUsuario.length - 1];
+      return ultimaMensagem ? ultimaMensagem.text : null;
+    }, [mensagens]);
 
+    const handleFinalizado = useCallback(async (dados, ultimaMensagem) => {
+       const ultimaMensagemUsuario = ultimaMensagem
+      if (!dados.foto || !dados.localizacao || !dados.categoria || !dados.subcategoria) {
+        console.error("Dados incompletos:", dados);
+        return;
+      }
+  
+      try {
+        await sendMessageToAPI(dados);
+        console.log("Dados enviados com sucesso:", dados);
+  
+        // Limpar estados após o envio
+        setLocalizacao(null);
+        setCategoriaSelecionada(null);
+        setSubcategoriaSelecionada(null);
+        setphtoSelecionada(null);
 
+        console.log('aqui esta a mensagem do usuarioaasdsad', ultimaMensagemUsuario)
 
+  
+      } catch (error) {
+        console.error("Erro ao enviar os dados:", error);
+      }
+    }, []);
 
+    const cadastrarOuConsultar = () => {
+      const ultimaMensagem = getUltimaMensagemDoUsuario().trim().toLowerCase(); // Limpa espaços e transforma em minúsculas
+      console.log(`Última mensagem do usuário: "${ultimaMensagem}"`); // Exibe a última mensagem entre aspas
+    
+      if (ultimaMensagem === '/cadastrar') {
+        console.log('Entrou na condição /cadastrar');
+        return setStep('inicio'); // Vai para a etapa de cadastro
+      }
+      
+      if (ultimaMensagem === '/consultar') {
+        console.log('Entrou na condição /consultar');
+        return handleConsultarProblema(); // Chama a função de consulta
+      }
+    
+      // Caso nenhuma das condições seja atendida
+      console.log('Não entrou em /cadastrar nem em /consultar');
+      return setMensagens(prevMensagens => [
+        ...prevMensagens, 
+        { from: 'bot', text: 'Por favor, digite /consultar ou /cadastrar para continuar.' }
+      ]);
+    };
+    
 
 
   useEffect (() => {
     console.log("mensagensssssssss:", mensagens);
+
+    if (mensagemRef.current) {
+      digitacao(mensagemRef.current);
+    }
+
+
     const lastTypingRef = document.querySelector('.last-bot-message');
     if (lastTypingRef) {
       digitacao(lastTypingRef);
     }
     const dados = {
-      // phtoSelecionada
-      foto: 'eee',
+      // 
+      foto: phtoSelecionada,
       localizacao: localizacao,
       categoria: categoriaSelecionada,
       subcategoria: subcategoriaSelecionada
     };
-    handleFinalizado(dados);
-   
     
-  }, [mensagens, categoriaSelecionada, localizacao, subcategoriaSelecionada]);
+  // Chama a função para obter a última mensagem
+  const ultimaMensagem = getUltimaMensagemDoUsuario();
+  if (ultimaMensagem) {
+      console.log("Última mensagem do usuário:", ultimaMensagem);
+  }
+
+  handleFinalizado(dados,ultimaMensagem);
+    
+  }, [mensagens, categoriaSelecionada, localizacao, subcategoriaSelecionada,phtoSelecionada, getUltimaMensagemDoUsuario, handleFinalizado]);
 
   return {
     mensagens,
@@ -667,8 +739,8 @@ const [phtoSelecionada, setphtoSelecionada] = useState('');
     handleEstadoClick,
     handleselCidade,
     handleEstadoClickCidade,
-   
-    handleGetProblemasPorCidade
+    handleGetProblemasPorCidade,
+    mensagemRef
     
   };
 };

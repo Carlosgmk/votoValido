@@ -22,6 +22,7 @@ export const Content = styled.main`
         padding: 1rem;
         transition: ease-in all .2s;
         
+        
         &:focus{
         border: 3px solid blue;
       }

@@ -43,10 +43,10 @@ const HeaderAndNav = () => {
           <li><a href="/" className="nav-link">Inicio</a></li>
           <li><a href="/cadastro" className="nav-link">Cadastro</a></li>
           <li><a href="/forum" className="nav-link">Forum</a></li>
-          <li><a href="*" className="nav-link">Sobre</a></li>
+          <li><a href="/sobre" className="nav-link">Sobre</a></li>
         </ul>
-        <div className="box-nav-contact">
-          <a href="" className="nav-contact">Contato</a>
+        <div className="box-nav-contact" id='contato'>
+          <a href="/" className="nav-contact">Contato</a>
         </div>
       </Nav>
 

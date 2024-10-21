@@ -2,7 +2,7 @@ import { ContentBanner } from "./style";
 import { Link } from 'react-router-dom';
 export default function Banner(){
   const videoId = 'bP8bI0RcrmM';
-  const url = `https://www.youtube.com/embed/${videoId}`
+  const url = `https://www.youtube.com/embed/GzuHW5MTJrs?si=ku74kR9ZruPPIkzH/${videoId}`
   return(
     <ContentBanner className="">
       <header className="flex">
@@ -22,11 +22,11 @@ export default function Banner(){
         </h1>
         <div className="youtube">
         <iframe
-          width="500"
+          width="450"
           height="250"
           src={url}
           title="YouTube video"
-          frameBorder="0"
+          frameBorder="5"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         ></iframe>
         </div>

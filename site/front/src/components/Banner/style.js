@@ -26,8 +26,10 @@ export const ContentBanner = styled.div`
         background-color: ${Theme.colors.yellow};
         width: 10rem;
         height: 30px;
-        color: white;
+        color: #002776;
+        font-weight: bold;
         border-radius: 20px;
+        padding:5px;
       }
     }
   }

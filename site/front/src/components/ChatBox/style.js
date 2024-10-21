@@ -20,13 +20,16 @@ const ChatBoxContent = styled.main`
     margin-top: 50px;
     width: 70%;
     max-width: 100%;
-    background-color: #e0dddd;
+    background-color: #F2F4FF;
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     height: 79vh;
+
+
+    
 
     .chat-body {
       flex: 1;
@@ -36,13 +39,14 @@ const ChatBoxContent = styled.main`
       flex-direction: column;
     }
 
+
     .chat-message {
       display: inline-block; /* Ocupa apenas o espaço necessário */
       padding: 10px 15px;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
       border-radius: 10px;
-      background-color: #fff;
-      max-width: 80%; /* Define um limite de largura para quebrar o texto */
+      background-color: #ffff;
+      max-width: 70%; 
       word-wrap: break-word; /* Garante que o texto quebre para a linha de baixo */
       word-break: break-word;
 
@@ -62,6 +66,10 @@ const ChatBoxContent = styled.main`
            color: #007bff;
            text-decoration: none;
       }  
+
+      .highlight {
+        color: blue !important; /* Defina a cor desejada */
+      }
     }
 }
     .chat-footer {
@@ -86,14 +94,18 @@ const ChatBoxContent = styled.main`
         cursor: pointer;
         margin-left: 10px;
       }
+      
+        
         .uploadFile{
           background-color: ${colors.blueLogo};
       }
     }
     .button-group {
-    display: flex;
+     display: flex;
     flex-direction: column;
      align-items: start;
+     
+     width:400px;
   }
    
    ///Media Query///
@@ -258,6 +270,17 @@ const CustomButton = styled.button`
   padding: 10px 20px;
   margin: 10px 10px 5px 0px;
   cursor: pointer;
+  
+  &:hover {
+    background-color: ${colors.blueLogo}; /* Cor de fundo ao passar o mouse */
+    color: yellow; /* Cor do texto ao passar o mouse */
+  }
+  
 `;
 
-export { ChatBoxContent, CustomButton };
+const StartMessage  = styled.span`
+  color: ${colors.blueLogo} !important;
+  font-weight: bold !important;
+`;
+
+export { ChatBoxContent, CustomButton,StartMessage  };

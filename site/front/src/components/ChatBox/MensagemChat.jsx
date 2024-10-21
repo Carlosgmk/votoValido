@@ -1,16 +1,10 @@
-import {  memo, useCallback,useState  } from 'react';
+import React from 'react';
+import {  memo, useCallback,useState,useRef, useEffect} from 'react';
+import { digitacao } from './typingEffect';
 import PropTypes from 'prop-types';
 import FotoContainer from '../FotoChatbot/fotoContainer';
-import { CustomButton } from './style';
+import { CustomButton,StartMessage } from './style';
 
-const formatarMensagem = (mensagem) => {
-  if (typeof mensagem === 'string') {
-    return mensagem.split('').map((char, index) => (
-      `<span style="animation-delay: ${index * 50}ms">${char}</span>`
-    )).join('');
-  }
-  return mensagem;
-}
 
 const MensagensChat = memo(({ 
   mensagem,
@@ -28,17 +22,14 @@ const MensagensChat = memo(({
   handleGetEstados,
   handleEstadoClick,
   handleEstadoClickCidade,
-  // handleselCidade,
-  
-  // handleConsultarProblemaRua,
-  
-  
-  
   
   
 }) => {
+
+  
   const [estados, setEstados] = useState([]);
-  // const [ultimaSelecao] = useState([]);
+  const mensagemRef = useRef(null);
+  
 
   const handleConsultarEstados = useCallback(async () => {
     const estadosUnicos = await handleGetEstados; // Chama a função para obter os estados
@@ -53,7 +44,7 @@ const MensagensChat = memo(({
         fetch(`https://eu1.locationiq.com/v1/reverse.php?key=pk.ddacdac981d0c27a478e935f8558a272&lat=${latitude}&lon=${longitude}&format=json`)
           .then(response => response.json())
           .then(data => {
-            console.log(data);
+            console.log('Resposta da API:', JSON.stringify(data, null, 2));
             handleCompartilharLocalizacao();
           })
           .catch(error => console.error(error));
@@ -68,99 +59,94 @@ const MensagensChat = memo(({
   }, [handleCompartilharLocalizacao]);
 
 
+  useEffect(() => {
+    if (mensagemRef.current && mensagem.from === 'bot') {
+        digitacao(mensagemRef.current);
+       
+    }
+  }, [mensagem, mensagem.from]);
 
+ 
 
   return (
     <div key={indice} className={`chat-message ${mensagem.from === 'bot' ? 'bot' : 'user'}`}>
-      {mensagem.from === 'user' && mensagem.text === 'Foto adicionada' ? (
-        <FotoContainer selectedFile={selectedFile} fotoCarregada={fotoCarregada} mensagens={mensagens} />
-      ) : (
-        mensagem.from === 'bot' ? (
-          <div>
+    {mensagem.from === 'user' && mensagem.text === 'Foto adicionada' ? (
+      <FotoContainer selectedFile={selectedFile} fotoCarregada={fotoCarregada} mensagens={mensagens} />
+    ) : (
+      <div >
+        {mensagem.from === 'bot' ? (
+          <>
             {mensagem.text && (
-              <p
-                className={`eftTyping ${indice === mensagens.length - 1 ? 'last-bot-message' : ''}`}
-                dangerouslySetInnerHTML={{ __html: formatarMensagem(mensagem.text) }}
-              />
+              <p  ref={mensagemRef} className={`eftTyping ${indice === mensagens.length - 2 ? 'last-bot-message' : ''}`}>
+                {mensagem.text.split(/(\/start|\/consulta)/).map((part, index) => (
+                  <React.Fragment key={index}>
+                    {part && part.trim() !== '' && part.trim() !== '/start' && part.trim() !== '/consulta' ? (
+                      <span>{part}</span>
+                    ) : null}
+                    {part.trim() === '/start' && <StartMessage key={index}>/start</StartMessage>}
+                    {part.trim() === '/consulta' && <StartMessage key={index}>/consulta</StartMessage>}
+                  </React.Fragment>
+                ))}
+              </p>
             )}
-            {mensagem.text === 'Muito bem, com qual das opções você deseja seguir:' && (
+  
+            {/* Renderizando botões */}
+            {mensagem.text === 'Muito bem, com qual das opções você deseja seguir:' &&  (
               <div className="button-group">
-                <br />
                 <CustomButton onClick={handleRelatarProblema}>Relatar um novo problema</CustomButton>
                 <CustomButton onClick={handleConsultarProblema}>Consultar atualizações da minha cidade</CustomButton>
               </div>
             )}
+  
             {mensagem.text === 'Agora compartilhe sua localização:' && (
               <div className="button-group">
-                <br />
                 <CustomButton onClick={handleCompartilharLocalizacaoAtual}>Compartilhar a Localização Atual</CustomButton>
                 <CustomButton onClick={() => {
                   handleEnviarManualmente();
                   setMensagens(prevMensagens => [...prevMensagens, { from: 'user', text: 'Enviar Manualmente' }]);
-                }}>Enviar Manualmente</CustomButton>
+                }}>
+                  Enviar Manualmente
+                </CustomButton>
               </div>
             )}
+  
             {mensagem.opcoes && (
               <div className="button-group">
-                {mensagem.text ? <br /> : null}
                 {mensagem.opcoes.map((opcao, index) => (
-                  <CustomButton key={index} onClick={() => mensagem.isSubcategory ? handleSubcategoriaClick(opcao) : handleButtonClick(opcao)}>{opcao}</CustomButton>
+                  <CustomButton key={index} onClick={() => mensagem.isSubcategory ? handleSubcategoriaClick(opcao) : handleButtonClick(opcao)}>
+                    {opcao}
+                  </CustomButton>
                 ))}
               </div>
             )}
-
-                {/* Exibe os botões de estados únicos */}
-                {mensagem.estado && (
+  
+            {mensagem.estado && (
               <div className="button-group">
                 {mensagem.estado.map((estado, index) => (
-                  <CustomButton key={index} onClick={() => { handleConsultarEstados(estados)
-                    handleEstadoClick(estado);
-                    
-                  }}>
+                  <CustomButton key={index} onClick={() => { handleConsultarEstados(estados); handleEstadoClick(estado); }}>
                     {estado}
                   </CustomButton>
                 ))}
               </div>
             )}
+  
             {mensagem.cidades && (
-            <div className="button-group">
-              {mensagem.cidades.map((cidade, index) => (
-              <CustomButton key={index} onClick={() => { 
-                handleEstadoClickCidade(cidade); // Chame a função para consultar problemas na cidade
-               
-                
-          }}>
-            {cidade}
-            </CustomButton>
-        ))}
-     </div>
-)}
-
-{/* {mensagem.ruas && (
-            <div className="button-group">
-              {mensagem.ruas.map((rua, index) => (
-              <CustomButton key={index} onClick={() => { 
-                // handleselCidade(cidade); // Chame a função para consultar problemas na cidade
-               
-                handleConsultarProblemaRua(rua)
-          }}>
-            {rua}
-            </CustomButton>
-        ))}
-
-          
-
-  </div>
-)} */}
-
-
-
-          </div>
+              <div className="button-group">
+                {mensagem.cidades.map((cidade, index) => (
+                  <CustomButton key={index} onClick={() => { handleEstadoClickCidade(cidade); }}>
+                    {cidade}
+                  </CustomButton>
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <p>{mensagem.text}</p>
-        )
-      )}
-    </div>
+        )}
+      </div>
+    )}
+  </div>
+  
   );
 });
 
@@ -180,7 +166,7 @@ MensagensChat.propTypes = {
   indice: PropTypes.number.isRequired,
   selectedFile: PropTypes.object,
   fotoCarregada: PropTypes.bool,
- mensagens: PropTypes.arrayOf(PropTypes.shape({
+  mensagens: PropTypes.arrayOf(PropTypes.shape({
     from: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
     opcoes: PropTypes.arrayOf(PropTypes.string),
@@ -202,10 +188,6 @@ MensagensChat.propTypes = {
   handleEstadoClickCidade: PropTypes.func,
   handleselCidade: PropTypes.func,
   handleConsultarProblemaRua: PropTypes.func,
-  
-  
-  
-  
 };
 
 export default MensagensChat;
